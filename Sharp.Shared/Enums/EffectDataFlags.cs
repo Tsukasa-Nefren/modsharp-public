@@ -17,23 +17,14 @@
  * along with ModSharp. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef MS_COREBRIDGE_H
-#define MS_COREBRIDGE_H
+using System;
 
-// 很多不可变的Object可以直接走这个拿
+namespace Sharp.Shared.Enums;
 
-class CoreBridge
+[Flags]
+public enum EffectDataFlags : uint
 {
-public:
-    class IFileSystem*                    FullFileSystem;
-    class ISteamApiProxy*                 SteamApi;
-    class CSharpNetworkStringTableHelper* NetworkStringTableHelper;
-    class CSharpKeyValuesHelper*          KeyValuesHelper;
-    class IMemAlloc*                      MemAlloc;
-    class CSharpKeyValues3Helper*         KeyValues3Helper;
-    class IEngineServer*                  EngineServer;
-};
-
-void InitCoreBridge();
-
-#endif
+    None                   = 0,
+    AttachToEntity         = 1 << 0,
+    ResetParticlesOnEntity = 1 << 1,
+}

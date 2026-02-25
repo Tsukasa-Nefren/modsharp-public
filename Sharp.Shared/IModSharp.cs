@@ -235,7 +235,7 @@ public interface IModSharp
     /// <summary>
     ///     Send NetMessage
     /// </summary>
-    bool SendNetMessage<T>(RecipientFilter filter, T data) where T : IMessage;
+    bool SendNetMessage<T>(RecipientFilter filter, T data) where T : class, IMessage;
 
     /// <summary>
     ///     Install HookNetMessage
@@ -245,6 +245,7 @@ public interface IModSharp
     /// <summary>
     ///     Remove HookNetMessage
     /// </summary>
+    [Obsolete("This is deprecated and do nothing, will be removed in 2.2", true)]
     void UnhookNetMessage(ProtobufNetMessageType msgId);
 
 #endregion
@@ -399,6 +400,11 @@ public interface IModSharp
     /// <param name="className">C++ class name</param>
     /// <returns></returns>
     nint GetVTableByClass(string module, string className);
+
+    /// <summary>
+    ///     Find StringTable
+    /// </summary>
+    INetworkingStringTable? FindStringTable(string name);
 
     /// <summary>
     ///     Create KeyValues
