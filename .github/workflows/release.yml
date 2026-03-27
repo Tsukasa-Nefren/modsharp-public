@@ -329,7 +329,7 @@ jobs:
 
   nuget:
     needs: prefetch
-    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
     runs-on: ubuntu-latest
     steps:
       - name: Set Timezone
@@ -369,7 +369,7 @@ jobs:
         run: dotnet nuget push .build/nuget/*.nupkg --skip-duplicate --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json
 
   release:
-    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
     needs: [prefetch, windows, linux]
     permissions:
       contents: write
@@ -417,15 +417,16 @@ jobs:
           pushd build/linux-extensions && zip -r ../../ModSharp-git${{env.GITCOMMIT}}-linux-extensions.zip * && popd
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITCOMMIT: ${{ needs.prefetch.outputs.git_commit }}
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
           overwrite_files: true
           prerelease: false
+          make_latest: true
           name: ModSharp-git${{env.GITCOMMIT}}
           tag_name: git-${{env.GITCOMMIT}}
+          target_commitish: ${{ github.sha }}
           fail_on_unmatched_files: true
           generate_release_notes: true
           files: |
