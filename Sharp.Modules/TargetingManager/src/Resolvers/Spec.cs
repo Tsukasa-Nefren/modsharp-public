@@ -17,13 +17,35 @@
  * along with ModSharp. If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Sharp.Modules.TargetingManager.Shared;
+using Sharp.Shared;
+using Sharp.Shared.Enums;
 using Sharp.Shared.Objects;
 
-namespace Sharp.Modules.TargetingManager.Shared;
+namespace Sharp.Modules.TargetingManager.Resolvers;
 
-public interface ITargetResolver
+public sealed class Spec : BaseResolver
 {
-    string GetTarget();
+    public Spec(ISharedSystem sharedSystem) : base(sharedSystem)
+    {
+    }
 
-    IEnumerable<IGameClient> Resolve(IGameClient? activator);
+    public override string GetTarget()
+        => PredefinedTargets.Spec;
+
+    public override IEnumerable<IGameClient> Resolve(IGameClient? handler)
+    {
+        foreach (var client in ClientManager.GetGameClients(true))
+        {
+            if (client.GetPlayerController() is not { } controller)
+            {
+                continue;
+            }
+
+            if (controller.Team == CStrikeTeam.Spectator)
+            {
+                yield return client;
+            }
+        }
+    }
 }

@@ -17,27 +17,24 @@
  * along with ModSharp. If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Sharp.Modules.TargetingManager.Shared;
-using Sharp.Shared.Managers;
+using Microsoft.Extensions.Logging;
+using Sharp.Modules.AdminCommands.Services.Internal;
 using Sharp.Shared.Objects;
+using Sharp.Shared.Types;
 
-namespace Sharp.Modules.TargetingManager.BuiltinResolvers;
+namespace Sharp.Modules.AdminCommands.Common;
 
-public class Alive(IClientManager clientManager) : ITargetResolver
+internal sealed class CommandContextFactory
 {
-    public string GetTarget()
-        => PredefinedTargets.Alive;
+    private readonly InterfaceBridge _bridge;
+    private readonly ModuleContext   _moduleContext;
 
-    public IEnumerable<IGameClient> Resolve(IGameClient? activator)
+    public CommandContextFactory(InterfaceBridge bridge, ModuleContext moduleContext)
     {
-        foreach (var client in clientManager.GetGameClients(true))
-        {
-            if (client.GetPlayerController()?.GetPlayerPawn() is not { IsValidEntity: true, IsAlive: true })
-            {
-                continue;
-            }
-
-            yield return client;
-        }
+        _bridge        = bridge;
+        _moduleContext = moduleContext;
     }
+
+    public CommandContext Create(IGameClient? issuer, StringCommand command, ILogger logger)
+        => new (_bridge, _moduleContext, issuer, command, logger);
 }

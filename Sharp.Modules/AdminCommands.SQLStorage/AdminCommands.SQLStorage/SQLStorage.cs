@@ -38,13 +38,12 @@ public sealed class SqlStorage : IModSharpModule
 
     private readonly IAdminOperationStorageService _impl;
 
-    public SqlStorage(
-        ISharedSystem  sharedSystem,
-        string         dllPath,
-        string         sharpPath,
-        Version        version,
-        IConfiguration coreConfiguration,
-        bool           hotReload)
+    public SqlStorage(ISharedSystem sharedSystem,
+        string                      dllPath,
+        string                      sharpPath,
+        Version                     version,
+        IConfiguration              coreConfiguration,
+        bool                        hotReload)
     {
         _sharedSystem = sharedSystem;
         _logger       = sharedSystem.GetLoggerFactory().CreateLogger<SqlStorage>();
@@ -78,7 +77,7 @@ public sealed class SqlStorage : IModSharpModule
 
     public void Shutdown()
     {
-        ((StorageServiceImpl)_impl).Shutdown();
+        ((StorageServiceImpl) _impl).Shutdown();
     }
 
     private static string ResolveConnectionString(IConfiguration configuration)
@@ -88,8 +87,8 @@ public sealed class SqlStorage : IModSharpModule
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw new
-                KeyNotFoundException($"Missing '{ModuleConnectionStringKey}' or '{ConnectionStringKey}' in connection strings.");
+            throw new KeyNotFoundException(
+                $"Missing '{ModuleConnectionStringKey}' or '{ConnectionStringKey}' in connection strings.");
         }
 
         return connectionString;

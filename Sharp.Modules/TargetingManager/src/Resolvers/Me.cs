@@ -18,30 +18,27 @@
  */
 
 using Sharp.Modules.TargetingManager.Shared;
-using Sharp.Shared.Enums;
-using Sharp.Shared.Managers;
+using Sharp.Shared;
 using Sharp.Shared.Objects;
 
-namespace Sharp.Modules.TargetingManager.BuiltinResolvers;
+namespace Sharp.Modules.TargetingManager.Resolvers;
 
-public class Spec(IClientManager clientManager) : ITargetResolver
+public sealed class Me : BaseResolver
 {
-    public string GetTarget()
-        => PredefinedTargets.Spec;
-
-    public IEnumerable<IGameClient> Resolve(IGameClient? handler)
+    public Me(ISharedSystem sharedSystem) : base(sharedSystem)
     {
-        foreach (var client in clientManager.GetGameClients(true))
-        {
-            if (client.GetPlayerController()?.GetPlayerPawn() is not { IsValidEntity: true } pawn)
-            {
-                continue;
-            }
+    }
 
-            if (pawn.Team == CStrikeTeam.Spectator)
-            {
-                yield return client;
-            }
+    public override string GetTarget()
+        => PredefinedTargets.Me;
+
+    public override IEnumerable<IGameClient> Resolve(IGameClient? activator)
+    {
+        if (activator is null)
+        {
+            return [];
         }
+
+        return [activator];
     }
 }

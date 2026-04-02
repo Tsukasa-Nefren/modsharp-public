@@ -17,13 +17,22 @@
  * along with ModSharp. If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Sharp.Modules.TargetingManager.Shared;
+using Sharp.Shared;
 using Sharp.Shared.Objects;
 
-namespace Sharp.Modules.TargetingManager.Shared;
+namespace Sharp.Modules.TargetingManager.Resolvers;
 
-public interface ITargetResolver
+public sealed class Dead : BaseResolver
 {
-    string GetTarget();
+    public Dead(ISharedSystem sharedSystem) : base(sharedSystem)
+    {
+    }
 
-    IEnumerable<IGameClient> Resolve(IGameClient? activator);
+    public override string GetTarget()
+        => PredefinedTargets.Dead;
+
+    public override IEnumerable<IGameClient> Resolve(IGameClient? activator)
+        => ClientManager.GetGameClients(true)
+                        .Where(client => client.GetPlayerController()?.GetPlayerPawn() is { IsAlive: false });
 }

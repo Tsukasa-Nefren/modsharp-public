@@ -17,26 +17,20 @@
  * along with ModSharp. If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Sharp.Modules.TargetingManager.Shared;
-using Sharp.Shared.Managers;
-using Sharp.Shared.Objects;
+namespace Sharp.Modules.AdminCommands.Shared;
 
-#pragma warning disable CS9113 // Parameter is unread.
-
-namespace Sharp.Modules.TargetingManager.BuiltinResolvers;
-
-public class Me(IClientManager clientManager) : ITargetResolver
+public readonly record struct AdminOperationType(string Value)
 {
-    public string GetTarget()
-        => PredefinedTargets.Me;
+    public static readonly AdminOperationType Ban  = new ("core:ban");
+    public static readonly AdminOperationType Mute = new ("core:mute");
+    public static readonly AdminOperationType Gag  = new ("core:gag");
 
-    public IEnumerable<IGameClient> Resolve(IGameClient? activator)
-    {
-        if (activator is null)
-        {
-            return [];
-        }
+    public override string ToString()
+        => Value;
 
-        return [activator];
-    }
+    public bool Equals(AdminOperationType other)
+        => string.Equals(Value, other.Value, StringComparison.OrdinalIgnoreCase);
+
+    public override int GetHashCode()
+        => StringComparer.OrdinalIgnoreCase.GetHashCode(Value);
 }
