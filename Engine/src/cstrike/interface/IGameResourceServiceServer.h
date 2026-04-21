@@ -38,8 +38,12 @@ public:
     CGameEntitySystem* GetGameEntitySystem()
     {
 #ifdef PLATFORM_WINDOWS
-        return *reinterpret_cast<CGameEntitySystem**>(reinterpret_cast<uintptr_t>(this) + 88);
+        // CS2 2026-04-21: shifted from 88 (0x58) to 136 (0x88) on Windows.
+        // Verified via engine2.dll: only instance of `mov rax, [rcx+disp]; ret` in the
+        // CGameResourceService vtable now reads [rcx+0x88].
+        return *reinterpret_cast<CGameEntitySystem**>(reinterpret_cast<uintptr_t>(this) + 136);
 #else
+        // Linux offset may also have shifted; verify against linuxsteamrt64/libserver.so if applicable.
         return *reinterpret_cast<CGameEntitySystem**>(reinterpret_cast<uintptr_t>(this) + 80);
 #endif
     }
