@@ -181,20 +181,31 @@ struct SchemaClassInfoData_t
     SchemaClassInfoData_t() = delete;
 
 private:
-    SchemaClassInfoData_t*     m_pClassInfo;
-    const char*                m_pszName;
-    const char*                m_pszModule;
-    int32_t                    m_nSize;
-    int16_t                    m_nNumFields;
-    int16_t                    m_nStaticMetadataCount;
-    int8_t                     m_nAlignOf;
-    int8_t                     m_nNumBaseClasses;
-    int16_t                    m_nMultipleInheritanceDepth;
-    int16_t                    m_nSingleInheritanceDepth;
-    SchemaClassFieldData_t*    m_pFields;
-    SchemaBaseClassInfoData_t* m_BaseClasses;
-    DataMap_t*                 m_pDataMap;
-    SchemaMetadataEntryData_t* m_pStaticMetadata;
+    // Layout as of CS2 update 2026-04-21.
+    // Valve inserted a new 8-byte field at +0x18, pushing every subsequent member down by 8 bytes.
+    // Struct size grew from 0x68 to 0x70.
+    SchemaClassInfoData_t*     m_pClassInfo;                // 0x00
+    const char*                m_pszName;                   // 0x08
+    const char*                m_pszModule;                 // 0x10
+    void*                      m_pUnknown_0x18;             // 0x18 (new, observed zero at init across all 1060 classes)
+    int32_t                    m_nSize;                     // 0x20
+    int16_t                    m_nNumFields;                // 0x24
+    int16_t                    m_nStaticMetadataCount;      // 0x26
+    int8_t                     m_nAlignOf;                  // 0x28
+    int8_t                     m_nNumBaseClasses;           // 0x29
+    int16_t                    m_nMultipleInheritanceDepth; // 0x2A
+    int16_t                    m_nSingleInheritanceDepth;   // 0x2C
+    int16_t                    m_nPadding_0x2E;             // 0x2E
+    SchemaClassFieldData_t*    m_pFields;                   // 0x30
+    SchemaBaseClassInfoData_t* m_BaseClasses;               // 0x38
+    DataMap_t*                 m_pDataMap;                  // 0x40
+    SchemaMetadataEntryData_t* m_pStaticMetadata;           // 0x48
+    // +0x50  m_pTypeScope (runtime-populated)
+    // +0x58  m_pDeclaredClass (runtime-populated)
+    // +0x60  m_nFlags1 (uint32)
+    // +0x64  m_nFlags2 (uint32)
+    // +0x68  m_pfnManipulator
+    // sizeof = 0x70
 };
 
 class CSchemaSystemTypeScope
