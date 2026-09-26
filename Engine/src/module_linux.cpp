@@ -472,12 +472,18 @@ void CModule::DumpExports(void* module_base)
             continue;
         }
 
+        // imported symbol, st_value is 0
+        if (symbols[i].st_shndx == SHN_UNDEF)
+        {
+            continue;
+        }
+
         auto             address = symbols[i].st_value + _base_address;
         std::string_view name    = &string_table[symbols[i].st_name];
 
         _exports[name.data()] = address;
 
-        if (symbols[i].st_shndx == SHN_UNDEF || ELF64_ST_TYPE(symbols[i].st_info) != STT_FUNC)
+        if (ELF64_ST_TYPE(symbols[i].st_info) != STT_FUNC)
             continue;
 
         const auto demangled_name = Demangle(name.data());
