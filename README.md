@@ -5,6 +5,7 @@ Static emulation of ModSharp's gamedata resolution (Engine/src/gamedata.cpp) on 
 - `resolver.py`: FindAddress / FindFunctionFromReferences / GetVScriptFunction emulation.
 - `cvars.py`: static stand-in for runtime cvar refs. The ConVar object is located via its registration call.
   Then `[ptr]` refs go to object+8, and `[handle]` refs go to the object, kept only when a `mov edx/esi,-1` is within ±64 bytes.
+  `[ptr]` also takes refs to the object whose `lea r64,[rip+obj]` is followed within 4 instructions by `mov r64,[reg+8]` (linux reads cvars this way).
 - `audit.py`: resolve every Addresses entry: `CS2_GAME=<game dir> python audit.py <gamedata dir> new out.json`
 - `canacq_check.py`: CanAcquire refs candidates (current refs and each cvar alone).
 - `engoff_emu.py`: port of ResolveServerSideClientOffsets / ResolveNetworkGameServerOffsets.

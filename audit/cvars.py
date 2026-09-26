@@ -55,6 +55,50 @@ def _objects_for(m, name, log):
     return sorted(set(objs))
 
 
+MAX_FOLLOWING_INSTRUCTIONS = 4
+
+
+def _base_reg(ins, reg):
+    """largest enclosing 64-bit register (ZydisUtility::GetBaseRegister)"""
+    n = ins.reg_name(reg)
+    if n is None:
+        return reg
+    if n.startswith("r") and n[1:].rstrip("dwb").isdigit():
+        n = n.rstrip("dwb")
+    else:
+        n = {"al": "ax", "ah": "ax", "bl": "bx", "bh": "bx", "cl": "cx", "ch": "cx", "dl": "dx", "dh": "dx",
+             "sil": "si", "dil": "di", "bpl": "bp", "spl": "sp"}.get(n, n)
+        if len(n) == 3 and n[0] in "er":
+            n = n[1:]
+        if n in ("ax", "bx", "cx", "dx", "si", "di", "bp", "sp"):
+            n = "r" + n
+    return getattr(X, "X86_REG_" + n.upper(), reg)
+
+
+def _lea_then_load(m, src):
+    """lea r64, [rip+disp] at src, followed within MAX_FOLLOWING_INSTRUCTIONS by mov r64, [reg+8] (reg not overwritten before)"""
+    ins = resolver.dec(m, src)
+    if ins is None or ins.id != X.X86_INS_LEA:
+        return False
+    ops = ins.operands
+    if len(ops) != 2 or ops[0].type != resolver.REG or ops[0].size != 8 or ops[1].type != resolver.MEM or ops[1].mem.base != X.X86_REG_RIP:
+        return False
+    lea_reg = ops[0].reg
+    cur = src + ins.size
+    for _ in range(MAX_FOLLOWING_INSTRUCTIONS):
+        ins = resolver.dec(m, cur)
+        if ins is None:
+            break
+        ops = ins.operands
+        if (ins.id == X.X86_INS_MOV and len(ops) == 2 and ops[0].type == resolver.REG and ops[0].size == 8
+                and ops[1].type == resolver.MEM and ops[1].mem.base == lea_reg and ops[1].mem.index == 0 and ops[1].mem.disp == 8):
+            return True
+        if ops and ops[0].type == resolver.REG and _base_reg(ins, ops[0].reg) == lea_reg:
+            break
+        cur += ins.size
+    return False
+
+
 def hook(m, cvars, log):
     sets = []
     for cv in cvars:
@@ -81,6 +125,10 @@ def hook(m, cvars, log):
         merged = []
         if add_ptr:
             merged += m.refs_to(ptr)
+            # linux: lea reg, [rip+handle]; mov r64, [reg+8]
+            for src in m.refs_to(ptr - 8):
+                if _lea_then_load(m, src):
+                    merged.append(src)
         if add_handle:
             for src in m.refs_to(ptr - 8):
                 found = False
