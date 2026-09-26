@@ -58,7 +58,7 @@ internal class GagService : ICommandCategory, IGagService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(2, "Admin.Usage.Gag", "Usage: ms_gag <target> [duration] [reason]"))
+        if (!ctx.RequireArgs(1, "Admin.Usage.Gag", "Usage: ms_gag <target> [duration] [reason]"))
         {
             return;
         }
@@ -151,7 +151,7 @@ internal class GagService : ICommandCategory, IGagService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(2, "Admin.Usage.Ungag", "Usage: ms_ungag <target> [reason]"))
+        if (!ctx.RequireArgs(1, "Admin.Usage.Ungag", "Usage: ms_ungag <target> [reason]"))
         {
             return;
         }

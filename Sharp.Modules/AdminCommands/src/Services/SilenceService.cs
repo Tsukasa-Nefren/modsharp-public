@@ -58,7 +58,7 @@ internal class SilenceService : ICommandCategory, ISilenceService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(2, "Admin.Usage.Silence", "Usage: ms_silence <target> [duration] [reason]"))
+        if (!ctx.RequireArgs(1, "Admin.Usage.Silence", "Usage: ms_silence <target> [duration] [reason]"))
         {
             return;
         }
@@ -157,7 +157,7 @@ internal class SilenceService : ICommandCategory, ISilenceService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(2, "Admin.Usage.Unsilence", "Usage: ms_unsilence <target> [reason]"))
+        if (!ctx.RequireArgs(1, "Admin.Usage.Unsilence", "Usage: ms_unsilence <target> [reason]"))
         {
             return;
         }

@@ -90,7 +90,7 @@ internal class BanService : ICommandCategory, IBanService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(3, "Admin.Usage.Ban", "Usage: ms_ban <target> <duration> [reason]"))
+        if (!ctx.RequireArgs(2, "Admin.Usage.Ban", "Usage: ms_ban <target> <duration> [reason]"))
         {
             return;
         }
@@ -127,7 +127,7 @@ internal class BanService : ICommandCategory, IBanService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(3, "Admin.Usage.BanIp", "Usage: ms_banip <target> <duration> [reason]"))
+        if (!ctx.RequireArgs(2, "Admin.Usage.BanIp", "Usage: ms_banip <target> <duration> [reason]"))
         {
             return;
         }
@@ -171,7 +171,7 @@ internal class BanService : ICommandCategory, IBanService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(3, "Admin.Usage.BanSubnet", "Usage: ms_bansubnet <target> <duration> [reason]"))
+        if (!ctx.RequireArgs(2, "Admin.Usage.BanSubnet", "Usage: ms_bansubnet <target> <duration> [reason]"))
         {
             return;
         }
@@ -215,7 +215,7 @@ internal class BanService : ICommandCategory, IBanService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(3, "Admin.Usage.AddBan", "Usage: ms_addban <steamid> <duration> [reason]"))
+        if (!ctx.RequireArgs(2, "Admin.Usage.AddBan", "Usage: ms_addban <steamid> <duration> [reason]"))
         {
             return;
         }
@@ -252,7 +252,7 @@ internal class BanService : ICommandCategory, IBanService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(2, "Admin.Usage.Unban", "Usage: ms_unban <steamid> [reason]"))
+        if (!ctx.RequireArgs(1, "Admin.Usage.Unban", "Usage: ms_unban <steamid> [reason]"))
         {
             return;
         }

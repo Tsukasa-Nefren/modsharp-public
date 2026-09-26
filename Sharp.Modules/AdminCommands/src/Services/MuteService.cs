@@ -58,7 +58,7 @@ internal class MuteService : ICommandCategory, IMuteService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(2, "Admin.Usage.Mute", "Usage: ms_mute <target> [duration] [reason]"))
+        if (!ctx.RequireArgs(1, "Admin.Usage.Mute", "Usage: ms_mute <target> [duration] [reason]"))
         {
             return;
         }
@@ -151,7 +151,7 @@ internal class MuteService : ICommandCategory, IMuteService
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(2, "Admin.Usage.Unmute", "Usage: ms_unmute <target> [reason]"))
+        if (!ctx.RequireArgs(1, "Admin.Usage.Unmute", "Usage: ms_unmute <target> [reason]"))
         {
             return;
         }

@@ -48,7 +48,7 @@ internal sealed class KickCommands : ICommandCategory
     {
         var ctx = _contextFactory.Create(issuer, command, _logger);
 
-        if (!ctx.RequireArgs(2, "Admin.Usage.Kick", "Usage: ms_kick <target> [reason]"))
+        if (!ctx.RequireArgs(1, "Admin.Usage.Kick", "Usage: ms_kick <target> [reason]"))
         {
             return;
         }
