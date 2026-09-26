@@ -82,7 +82,14 @@ internal class ConVarManager : ICoreConVarManager
             return;
         }
 
-        callbacks.Invoke(conVar);
+        try
+        {
+            callbacks.Invoke(conVar);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "An error occurred while calling convar change hook: {name}", conVar.Name);
+        }
     }
 
     public IConVar? FindConVar(string name, bool useIterator = false)
@@ -407,7 +414,14 @@ internal class ConVarManager : ICoreConVarManager
             {
                 var context = new StringCommand(command, false, arguments);
 
-                cb.Invoke(client, context);
+                try
+                {
+                    cb.Invoke(client, context);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "An error occurred while calling console command callback: {command}", command);
+                }
             }
         }
 
@@ -416,7 +430,14 @@ internal class ConVarManager : ICoreConVarManager
             {
                 var context = new StringCommand(command, false, arguments);
 
-                cb.Invoke(context);
+                try
+                {
+                    cb.Invoke(context);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "An error occurred while calling server command callback: {command}", command);
+                }
             }
         }
 
