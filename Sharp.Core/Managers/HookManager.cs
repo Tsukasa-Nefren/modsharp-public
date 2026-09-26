@@ -144,7 +144,7 @@ internal abstract class HookType<TParams, THookReturn, TClass> : UnloadCleanupOb
             return;
         }
 
-        if (_postHooks.Any(x => x.Equals(post)))
+        if (_postHooks.Any(x => x.Callback.Equals(post)))
         {
             return;
         }
