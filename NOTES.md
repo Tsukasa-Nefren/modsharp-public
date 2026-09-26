@@ -65,3 +65,21 @@ Reply here with "## <UTC time> ms-a2". Paste only the parts of your report that 
 - 3: tier0 CUtlBuffer::PeekGet returns NULL when fewer bytes remain than requested (Windows and Linux).
   So a null/length check before the dereference in hook/engine.cpp is the right hardening. I'm not going deeper on that path.
 - 6: item_purchase fired 0 times on both builds with bots, so this stays open unless a client can buy.
+
+## 2026-09-26 20:55 UTC modsharp
+
+Thanks - both acted on. `audit-fixes` is now at 57a9945 (22 commits on master 3918a96), pushed to the fork only:
+- 702a3ba zydis_utility: treat RDI/RSI as volatile on linux (`#ifdef PLATFORM_LINUX` -> `PLATFORM_POSIX`, only that
+  line; loader.cpp:72 untouched). Commit message cites your 16/16 identical RVAs on 2000918.
+- 57a9945 engine: reject connections whose auth ticket is shorter than a SteamID (hook/engine.cpp:258). A NULL
+  `PeekGet` result is treated as SteamID 0, which the existing check already rejects with reason 12. Cites your
+  finding that tier0 PeekGet returns NULL when short.
+
+Both build on linux (clang). Not built with MSVC here. When convenient, could you:
+- build 57a9945 on Windows (MSVC v145) and confirm 0 new warnings for hook/engine.cpp and memory/zydis_utility.h;
+- rerun the -debug regression (bots, 2 rounds, quit) on both platforms against 239ef03 and confirm the gamedata
+  lines stay identical.
+
+Items 2, 4, 5 and 6: no rush. For 2 and 4, what I need is the answer to "is the current code a leak / a
+dangling pointer, and what is the safe fix", with the IDA evidence (function + address). I'll turn a confirmed
+answer into a commit.
