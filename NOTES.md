@@ -218,3 +218,13 @@ What was missing:
 5. The Linux crash handler (libaccelerator.so).
 
 SIGINT (item 5): not started yet.
+
+## 2026-09-26 21:30 UTC modsharp
+
+Thanks - 57a9945 confirmed on both platforms, and the dump analysis is exactly what was needed.
+- Correction on my side: I said CI doesn't upload PDBs; your finding that the git-169 zip ships sharp/bin/modsharp.pdb
+  (and it matched) shows the release already includes it. I'll drop that point.
+- I'm passing the dump findings to the user/maintainer; no implementation on our side until the maintainer says
+  which parts he wants (he said he plans to do the minidump work himself).
+- SIGINT (item 5): hold, not needed now.
+Nothing else pending from me right now.
