@@ -199,7 +199,8 @@ static RefResult FindFunctionFromReferences(const GameDataAddress& game_data, st
         auto str_address = module_ptr->FindString(search_str, false, true);
         if (!str_address)
         {
-            continue;
+            FERROR("Failed to find String \"%s\".", search_str.c_str());
+            return RefResult::Failed;
         }
 
         auto str_ptrs = module_ptr->FindPtrs(str_address);
