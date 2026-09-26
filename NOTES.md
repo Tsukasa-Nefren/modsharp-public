@@ -83,3 +83,38 @@ Both build on linux (clang). Not built with MSVC here. When convenient, could yo
 Items 2, 4, 5 and 6: no rush. For 2 and 4, what I need is the answer to "is the current code a leak / a
 dangling pointer, and what is the safe fix", with the IDA evidence (function + address). I'll turn a confirmed
 answer into a commit.
+
+## 2026-09-26 21:06 UTC ms-a2
+
+### 4. Variant_t string lifetime for delayed AddEntityIOEvent: SAFE
+- Variant.h: SetString sets fieldType = FIELD_CSTRING (0x1e) and stores the raw const char*.
+- AddEntityIOEvent (server.dll 2000917 @0x137a210 win, libserver.so @0x22de740 linux) allocates a 248-byte
+  event and copies the passed Variant into it via the variant-copy routine (win sub_180146BC0). That routine's
+  case 0x1E (FIELD_CSTRING) does strlen + g_pMemAlloc->Alloc(len+1) + memcpy + sets the owns-memory flag.
+  Linux path (sub_22CD0D0 -> its copy helper) mirrors this.
+- So a FIELD_CSTRING variant string IS deep-copied into engine-owned memory before AddEntityIOEvent returns.
+  The managed temp buffer in EntityNatives.cpp:241-243 is safe; the delayed event does not hold a dangling pointer.
+- Caveat: this holds because SetString uses FIELD_CSTRING. A raw FIELD_STRING (0x2) variant also deep-copies
+  (case 3). The switch's default branch copies only the pointer, but SetInt/SetFloat/SetString never hit default.
+
+### 2. Net message free path: no measurable leak at 100k msgs
+- Built a local Windows engine (not committed) with delete msg in netmessage.cpp:40,46 and hook/client.cpp:851.
+- fix (Free(msg)) vs fixdel (delete msg), 3 x 100k PrintChannelAll(Chat) then 3 x 100k StringCmd via a bot,
+  measuring PrivateMemorySize:
+  - fix:    baseline 1298 MB -> after 6 batches 1254..1322 MB (no monotonic growth; +/-60 MB noise)
+  - fixdel: baseline 1344 MB -> 1282..1288 MB (flat)
+- No clear per-batch leak on either build; the difference between Free(msg) and delete msg was below the RSS noise
+  floor here. The code concern (Free skips ~CNetMessage / the protobuf's owned std::strings) is real, but I could
+  not demonstrate measurable growth at this scale with bot receivers. Suggest treating it as a correctness fix, or
+  retest at higher volume with real (non-bot) receivers, since PrintChannelAll skips fake clients.
+
+### 5. Linux SIGINT: confirmed, engine-side
+- With ModSharp loaded (master and fix), SIGINT logs (from libengine2.so) "SIGINT received / Shutdown request
+  received. Server will shutdown when empty." and the process never exits, even after bot_quota 0 + bot_kick.
+  Vanilla (ModSharp removed) exits ~4s. So a hook keeps the "empty" condition from being met. I have not yet traced
+  the engine's empty-check in IDA; will do if you still want it (low priority per your note).
+
+### 3. short auth ticket (defensive summary only)
+- tier0 CUtlBuffer::PeekGet (2000917, win @0x18019a1d0 / linux @0x26f890) returns 0/NULL when fewer bytes remain
+  than requested. So the unchecked deref in hook/engine.cpp:258-259 can deref NULL. A null/length guard before the
+  deref is the right hardening. I am not detailing the reachability path further.
