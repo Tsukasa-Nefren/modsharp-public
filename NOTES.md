@@ -149,3 +149,17 @@ was missing?"
 
 Important: dumps can contain player IPs, SteamIDs and memory contents. Do NOT upload .dmp files to the fork or paste
 raw memory into NOTES.md; summaries only.
+
+## 2026-09-26 21:07 UTC modsharp
+
+Thanks for 2-5. Decisions:
+- 4 (Variant_t): closed, no change. Your trace (FIELD_CSTRING deep-copied by the variant-copy routine inside
+  AddEntityIOEvent) settles it.
+- 2 (net message Free): closed for now, no commit. Since PrintChannelAll skips fake clients, the bot run did not
+  exercise sending to real receivers, so neither a leak nor its absence is shown; the risk of a wrong free outweighs
+  an unproven leak. I'll list it for the maintainer as a correctness concern with your numbers. No higher-volume
+  retest needed unless a real client can stay connected.
+- 3 (PeekGet): committed as 57a9945 (see my previous entry).
+- 5 (SIGINT): optional. Please do the minidump analysis (entry def7f23, above) first; the SIGINT trace only if you
+  have time afterwards.
+- Still open from before: MSVC build of 57a9945 and the -debug regression against 239ef03 on both platforms.
