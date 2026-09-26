@@ -163,3 +163,58 @@ Thanks for 2-5. Decisions:
 - 5 (SIGINT): optional. Please do the minidump analysis (entry def7f23, above) first; the SIGINT trace only if you
   have time afterwards.
 - Still open from before: MSVC build of 57a9945 and the -debug regression against 239ef03 on both platforms.
+
+## 2026-09-26 21:29 UTC ms-a2
+
+### audit-fixes @57a9945: MSVC build + -debug regression vs 239ef03
+- Windows (MSVC v145, Rebuild): OK. Diagnostics identical to 239ef03 (42 unique, all v8 headers);
+  hook/engine.cpp and memory/zydis_utility.h: 0 warnings.
+- Linux (clang-21): OK, 0 errors. Same 2 toml11 third-party warnings as before.
+- Regression (-debug, bots, 2 rounds, quit):
+  - Windows: 13/13 resolved RVAs and 24/24 gamedata lines identical to 239ef03, 0 Error lines, clean quit, no dump.
+  - Linux: 12/12 RVAs and 24/24 gamedata lines identical, 0 Error lines, quit exit 0.
+
+### Minidump analysis (summaries only, no dumps or raw memory uploaded)
+Tool: cdb (WinDbg 1.2606) + SOS. Symbols: Microsoft public server + the modsharp.pdb shipped next to modsharp.dll.
+
+Sampled 23 Windows dumps:
+- modsharp01 (production, git-169 release): 4
+- ms_kz01 (ModSharp): 10 of 23
+- my test server: 7 (known causes: C15 managed exception x6, one FatalError produced on purpose)
+
+| # | Question | Finding |
+|---|---|---|
+| 1 | Who wrote it | Engine breakpad inside cs2.exe ("Using breakpad crash handler", AppID 2347773). Written to game/bin/win64/cs2_<yyyy>_<mmdd>_<hhmmss>_<n>_<reason>.mdmp; reason is accessviolation / crash / error / breakpoint / V8_hiting_max_memory_limit__512_MB. ModSharp installs no handler on Windows. WER only leaves Application-log events 1000/1026, and 1026 contains the managed stack; no WER .dmp was kept. Linux: the loader logs "Failed to load accelerator/breakpad: ../../sharp/bin/libaccelerator.so" because it is not in the package, so only kernel core dumps happen. |
+| 2 | Exception / module | Production: c0000005 in animationsystem (read of 0xa00000001) under server RestartRound; older ones in tier0 / server. "crash" dumps = e0434352 (CLR exception) at KERNELBASE!RaiseException. "error" dumps = 80000003 in tier0. |
+| 3 | FatalError dumps | None among the 16 real dumps. Reproduced one (Sharp.Core.dll missing, no -debug): see "FatalError behaviour" below. |
+| 4 | Callstack quality | modsharp.dll frames fully named with the release PDB (the git-169 zip ships sharp/bin/modsharp.pdb and it matched), e.g. Detour_RestartRound / Virtual_FrameUpdatePostEntityThink / Detour_GameFrame. Valve modules show only nearest-export names (e.g. "ExtractModuleMetadata+0x3049a8"), which is misleading. Dumps older than the current CS2 binaries unwind only 2-6 frames: the dump carries no module images/.pdata, so cdb can't unwind through Valve code once the files on disk were updated. Managed frames: raw JIT addresses only; SOS "Unable to walk the managed stack (80131c49)", no exception object. |
+| 5 | Type / size | Flags 0x160 = UnloadedModules + IndirectlyReferencedMemory + ProcessThreadData (a "User Mini Dump"), 0.3-5.4 MB, plus a breakpad CommentStreamA (~12 KB). |
+| 6 | Match to logs | The comment stream holds uptime, current map, command line and the last ~100-1100 engine console lines, newest first. L<CoreCLR> (Serilog) lines: 0 in every dump, because managed logs bypass the engine console. Production crash 01:26:32: the last ModSharp log line was 72 min earlier (00:14:32, also the newest console line in the dump); the next entries are the AMP restart. Matching works by dump-file time + comment (map, uptime), not by content. |
+
+FatalError behaviour (logging.cpp:150-182, reproduced on 57a9945):
+- Without -nodialog it calls MessageBoxA("Error") and blocks.
+  - I waited 90 s: no dump, no exit.
+  - On a headless/AMP server that is a hang, not a crash.
+- With -nodialog it writes 0x55667788 to address 0 (so the record says "write to address 0000000000000000" at modsharp!FatalError+0x1e4), and breakpad writes a dump.
+  - Stack fully named: FatalError <- GetDotnetFunctionPointer <- coreclr::Bootstrap <- ModSharp_Init <- Detour_Source2_Init.
+  - Message recoverable from three places: fatal.log, the breakpad comment ring (it is the newest console line), and raw stack memory.
+
+Managed-exception crash (known cause: exception thrown by a console command callback on master):
+- Stack: RaiseException <- coreclr IL_Throw <- 3 unnamed JIT frames <- tier0 <- engine2. No modsharp.dll frame.
+- Exception type: absent from the dump. The message exists only as a UTF-16 string somewhere in memory.
+- The plugin's own last console line is in the comment ring; the .NET "Unhandled exception ... at ..." text is not (it goes to stderr and event 1026).
+
+Summary: could the root cause be identified from the current dumps?
+- FatalError: yes (with -nodialog).
+- Native crash with current binaries: location yes, cause often no.
+  - Valve frames are unnamed, there are no objects/heap, and older dumps lose the stack after a CS2 update.
+- Managed exception: no. The type, message and managed stack are all missing from the dump.
+
+What was missing:
+1. Managed exception details in the dump or console ring.
+2. Managed log lines in the ring.
+3. Enough unwind context for old dumps.
+4. A non-blocking FatalError by default on dedicated servers.
+5. The Linux crash handler (libaccelerator.so).
+
+SIGINT (item 5): not started yet.
