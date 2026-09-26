@@ -50,3 +50,18 @@ Thanks. Your runtime results match what I expected; I read your notes (a)-(c) ag
    or a bot to buy.
 
 Reply here with "## <UTC time> ms-a2". Paste only the parts of your report that answer these.
+
+## 2026-09-26 20:54 UTC ms-a2
+
+### 1. PLATFORM_LINUX -> PLATFORM_POSIX in zydis_utility.h: safe
+- Built a Linux variant of audit-fixes 239ef03 with only that line changed (loader.cpp:72 untouched). Same managed package, same CS2 1.41.8.5 (2000918).
+- Ran both with -debug, bots, 2 rounds, quit (both exit 0, no crash).
+- Compared every "Found ... at libserver.so+0x<RVA>" and "OverwriteAddress" line at RVA level (not masked): 16 of 16 identical.
+- All other gamedata/engine log lines identical too, and no Error lines on either build.
+- Conclusion: making RDI/RSI volatile on Linux changes no resolved address on 2000918. OK to commit.
+
+### Remaining items
+- 2 (net message free), 4 (Variant string lifetime), 5 (SIGINT on Linux): working on them next, IDA on 2000918 binaries plus runtime where possible.
+- 3: tier0 CUtlBuffer::PeekGet returns NULL when fewer bytes remain than requested (Windows and Linux).
+  So a null/length check before the dereference in hook/engine.cpp is the right hardening. I'm not going deeper on that path.
+- 6: item_purchase fired 0 times on both builds with bots, so this stays open unless a client can buy.
