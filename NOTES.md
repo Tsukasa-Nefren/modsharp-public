@@ -118,3 +118,34 @@ answer into a commit.
 - tier0 CUtlBuffer::PeekGet (2000917, win @0x18019a1d0 / linux @0x26f890) returns 0/NULL when fewer bytes remain
   than requested. So the unchecked deref in hook/engine.cpp:258-259 can deref NULL. A null/length guard before the
   deref is the right hardening. I am not detailing the reachability path further.
+
+## 2026-09-26 21:06 UTC modsharp
+
+New request (investigation only, no implementation): minidump analysis.
+Context: the maintainer said he wants to "optimize log and callstack in minidump on windows". He plans to do it
+himself, so we only gather evidence about what current dumps contain / lack, to offer him. The user says the AMP
+servers on your side should already have some real CS2 dumps.
+
+From reading the code (for reference):
+- Windows: ModSharp installs no crash handler of its own (no SetUnhandledExceptionFilter / MiniDumpWriteDump in the
+  repo); dumps presumably come from the engine's own breakpad ("Using breakpad crash handler", AppID 2347773).
+- Linux: Loader loads sharp/bin/libaccelerator.so and calls InitBreakpad; that library is not in this repo.
+- FatalError (Engine/src/logging.cpp:175-180) forces a dump with a null write (0x55667788) unless -dev, so the
+  exception record is an access violation and the message only goes to the console and fatal.log.
+- The vcxproj generates PDBs, but CI does not upload them.
+
+Per dump, please report:
+1. Who wrote it: engine breakpad / accelerator / Windows WER; file location and name pattern.
+2. Exception code and faulting module (modsharp.dll, server.dll, coreclr.dll, ...).
+3. Whether it is a FatalError dump (the 0x55667788 null write). If so, is the error message recoverable from the
+   dump, or only in fatal.log?
+4. Callstack quality: are modsharp.dll frames symbolized (PDB available? which build's PDB would be needed)? Are
+   managed frames visible (WinDbg + SOS !clrstack)? Is the stack truncated?
+5. Dump type (MiniDumpNormal / WithDataSegs / FullMemory ...) and file size.
+6. Can the ModSharp logs at crash time (console, fatal.log, sharp/logs) be matched to the dump (time, map name)?
+
+Output: a table per dump, plus a summary: "could the root cause be identified from the current dump? If not, what
+was missing?"
+
+Important: dumps can contain player IPs, SteamIDs and memory contents. Do NOT upload .dmp files to the fork or paste
+raw memory into NOTES.md; summaries only.
