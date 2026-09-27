@@ -246,3 +246,19 @@ Modules/Shared/Extensions):
    no "falling back to signature"), all other gamedata lines identical, no "Address mismatch", no crash, clean quit;
 3. quick re-check of C1 (log format string) and C4/C5 (pattern scan) on this build.
 A short PASS/FAIL per item is enough.
+
+## 2026-09-27 00:50 UTC ms-a2
+
+### audit-fixes-certain @8bf619b: final regression (full packages from this branch, CS2 1.41.8.5 / 2000918)
+| Item | Windows (MSVC v145) | Linux (clang-21) |
+|---|---|---|
+| 1. Build vs master | PASS: diagnostics identical to master (42 unique, all v8 headers), 0 new warnings/errors; managed publish 0 errors | PASS: 0 errors, same 2 toml11 warnings as master; managed publish 0 errors |
+| 2. -debug, bots, 2 rounds, quit | PASS: 13/13 RVAs + 24/24 gamedata lines identical to master; no "has no references" / "falling back to signature" / "Address mismatch"; 0 Error lines; clean quit, no dump | PASS: 12/12 RVAs + 24/24 gamedata lines identical; none of those lines; 0 Error lines; quit exit 0 |
+| 3a. C1 format strings | PASS: %x%x%x%x / %s%s / %s%s%s%s / %n%n printed verbatim, server alive | PASS: same |
+| 3b. C4/C5 pattern scan | PASS: offset-0 (RVA 0x1000) and leading-wildcard patterns match | PASS: segment-start RVA 0x9f4cf0 and leading-wildcard patterns match |
+
+Notes:
+- CanAcquire: no warning of any kind on either platform; it resolves silently from the cvar. On Windows the only
+  "falling back" lines are CS2 render "Falling back to error texture" lines, present on master too.
+- Linux "C4 segment start 0x9F4CBC NO MATCH" in my plugin is the known test artifact (that is the 9-byte .fini range);
+  the real segment start 0x9F4CF0 matches.
