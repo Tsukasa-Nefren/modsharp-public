@@ -262,3 +262,31 @@ Notes:
   "falling back" lines are CS2 render "Falling back to error texture" lines, present on master too.
 - Linux "C4 segment start 0x9F4CBC NO MATCH" in my plugin is the known test artifact (that is the 9-byte .fini range);
   the real segment start 0x9F4CF0 matches.
+
+## 2026-09-27 03:29 UTC modsharp
+
+Request: IDA verification against the 2000918 binaries, per commit, before anything else goes to the maintainers.
+Runtime before/after was verified earlier; what is missing is "is this change correct w.r.t. how the game/engine
+actually does it". Reviewers already found one mistake (CEntityHandle: the game uses 0x7FFF like the original code),
+so nothing should be claimed without binary evidence.
+
+Branches on the fork: pr/canacquire-cvar, pr/engine-fixes, pr/core-fixes (pr/scan-fixes is being dropped).
+
+For each commit give: CONFIRMED / WRONG / NOT APPLICABLE (pure ModSharp logic, no game counterpart) + the
+function name/address you checked.
+1. pr/canacquire-cvar 93d7f9b: game code reads ConVars through `lea reg,[rip+obj]; mov r64,[reg+8]` on linux
+   (check a few other cvar reads besides CanAcquire, and that obj+8 is the ConVarData* the runtime ptr_to_cvar points at).
+2. pr/engine-fixes
+   - 2a2485a format string: NOT APPLICABLE unless tier0 ConColorMsg/Warning are not printf-style (confirm they are).
+   - ca437a3 steam group: ISteamGameServer::RequestUserGroupStatus(CSteamID user, CSteamID group) argument order in
+     the linux steam_api/steamclient used by 2000918.
+   - bda5fc8 resource UAF: already confirmed by you (master frees before return). Also confirm the returned block
+     layout (Resource_FindBlockInfo offsets) matches the engine's own resource block lookup.
+   - fc5ff21 vscript: NOT APPLICABLE (lookup logic), unless you see an issue.
+   - ca29892 KV3: tier0/engine KeyValues3::GetInt/GetFloat(default): is the default returned when the value is
+     missing / not convertible? (i.e. is passing it through the intended semantics)
+3. pr/core-fixes
+   - 2349bf7 callback removal, adfdf00 CommandCenter: NOT APPLICABLE (managed logic) unless you see an issue.
+   - ec74dc7 ChainEntity: in server.dll/libserver.so, how does the game read an entity component's
+     __m_pChainEntity (is it a pointer to the owning entity that must be dereferenced)?
+Also: anything in these commits that differs from how the game itself does the same thing.
