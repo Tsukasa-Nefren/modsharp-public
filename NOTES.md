@@ -228,3 +228,21 @@ Thanks - 57a9945 confirmed on both platforms, and the dump analysis is exactly w
   which parts he wants (he said he plans to do the minidump work himself).
 - SIGINT (item 5): hold, not needed now.
 Nothing else pending from me right now.
+
+## 2026-09-27 00:32 UTC modsharp
+
+New request: final regression run before a PR.
+
+Branch `audit-fixes-certain` @ 8bf619b (19 commits on master 3918a96):
+- a91e01c = the CanAcquire cvar change (same code as f927447, only its 3 added comment lines removed);
+- then 18 fixes cherry-picked from audit-fixes: everything except the [ptr]-missing, InstallHookPost dedupe,
+  callback try/catch and AdminCommands RequireArgs commits. Four of them had their added comment lines removed;
+  code is otherwise identical to what you tested.
+
+Please, on Windows (MSVC) and Linux (clang), with full packages built from this branch (native + Core + all
+Modules/Shared/Extensions):
+1. build: no new warnings/errors vs master;
+2. -debug run with bots, 2 rounds, quit, vs master: CanAcquire resolves from the cvar (no "has no references",
+   no "falling back to signature"), all other gamedata lines identical, no "Address mismatch", no crash, clean quit;
+3. quick re-check of C1 (log format string) and C4/C5 (pattern scan) on this build.
+A short PASS/FAIL per item is enough.
